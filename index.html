@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recursive Functions Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<!-- Standalone copies: paste an exported course library between these tags.
+     When the page runs on claude.ai, the library published from the instructor panel is used instead. -->
+<script type="text/x-recfn-library" id="standalone-library"></script>
+<style>
+:root{
+  --bg:#EEF2F6; --surface:#FFFFFF; --sunk:#F6F8FB; --ink:#17202B; --muted:#5A6676; --line:#D5DCE5;
+  --blue:#155A8A; --prim:#3D4B5D; --rho:#A35F0A; --mu:#6A4BA6; --name:#155A8A;
+  --red:#B42318; --green:#1D7A4C; --warn:#9A6700; --sel:rgba(21,90,138,.16);
+  --ui:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --math:"STIX Two Text","Cambria Math","Times New Roman",serif;
+  color-scheme:light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151B; --surface:#192029; --sunk:#141A22; --ink:#E4E9F0; --muted:#98A4B3; --line:#2B3542;
+  --blue:#74B3E3; --prim:#B9C5D3; --rho:#E8A64F; --mu:#B79CF2; --name:#8CC2EC;
+  --red:#F28B80; --green:#6DCB99; --warn:#E4B649; --sel:rgba(116,179,227,.22); color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#11151B; --surface:#192029; --sunk:#141A22; --ink:#E4E9F0; --muted:#98A4B3; --line:#2B3542;
+  --blue:#74B3E3; --prim:#B9C5D3; --rho:#E8A64F; --mu:#B79CF2; --name:#8CC2EC;
+  --red:#F28B80; --green:#6DCB99; --warn:#E4B649; --sel:rgba(116,179,227,.22); color-scheme:dark;}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--ui)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:.35rem .75rem;line-height:1.3}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:var(--surface);font-weight:700}
+.btn:disabled{opacity:.5;cursor:default}
+select,input[type=number],input[type=text]{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:.3rem .5rem}
+input[type=number]{width:4.2rem;padding:.2rem .4rem}
+
+header.top{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:.9rem 1.25rem;border-bottom:1px solid var(--line);background:var(--surface)}
+.brand{display:flex;align-items:baseline;gap:.6rem;margin-right:auto}
+.brand h1{margin:0;font:600 1.45rem/1.1 var(--math);letter-spacing:.005em}
+.brand h1 .g{color:var(--rho)} .brand h1 .m{color:var(--mu)}
+.brand span{color:var(--muted);font-size:.9rem}
+.top .tools{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.pill{font-size:.8rem;padding:.15rem .55rem;border-radius:999px;border:1px solid var(--mu);color:var(--mu)}
+
+main{display:grid;grid-template-columns:minmax(320px,5fr) 7fr;gap:1rem;padding:1rem 1.25rem 2rem;max-width:1600px;margin:0 auto}
+@media (max-width:900px){main{grid-template-columns:1fr;padding:.75rem}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-width:0}
+.panel-head{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.6rem .75rem;border-bottom:1px solid var(--line)}
+.panel-head .spacer{flex:1}
+.ins{font-family:var(--math);font-size:1.05rem;min-width:2.2rem;padding:.15rem .5rem}
+.lim{display:flex;align-items:center;gap:.35rem;color:var(--muted);font-size:.85rem}
+
+/* editor */
+.ed{display:flex;height:min(62vh,640px);min-height:300px;font:13.5px/1.6 var(--mono);background:var(--sunk);border-bottom:1px solid var(--line)}
+@media (max-width:900px){.ed{height:46vh}}
+.gutter{flex:none;width:3rem;overflow:hidden;color:var(--muted);text-align:right;padding:.75rem .5rem .75rem 0;user-select:none;border-right:1px solid var(--line)}
+.gutter div{height:1.6em}
+.gutter .e{color:var(--red);font-weight:600}
+.gutter .w{color:var(--warn);font-weight:600}
+.ed-inner{position:relative;flex:1;min-width:0}
+.ed-inner pre,.ed-inner textarea{position:absolute;inset:0;margin:0;padding:.75rem;font:inherit;white-space:pre;tab-size:2;border:0;overflow:auto}
+.ed-inner pre{pointer-events:none;overflow:hidden;color:var(--ink)}
+.ed-inner textarea{background:transparent;color:transparent;caret-color:var(--ink);resize:none;outline:none}
+.ed-inner textarea::selection{background:var(--sel);color:transparent}
+.k-rho{color:var(--rho);font-weight:600} .k-mu{color:var(--mu);font-weight:600}
+.k-prim{color:var(--blue);font-weight:600} .k-name{color:var(--ink)} .k-unknown{color:var(--ink)}
+.k-num{color:var(--green)} .k-com{color:var(--muted);font-style:italic} .k-op{color:var(--rho)} .k-dir{color:var(--mu)}
+.k-str{color:var(--green)} .k-err{text-decoration:wavy underline var(--red);text-decoration-skip-ink:none;text-underline-offset:3px}
+.diags{max-height:11rem;overflow:auto;padding:.4rem .5rem;font-size:.88rem}
+.diags:empty::before{content:"No problems found.";color:var(--muted);padding:.25rem}
+.diag{display:flex;gap:.6rem;width:100%;text-align:left;border:0;background:none;padding:.25rem;border-radius:6px}
+.diag:hover{background:var(--sunk)}
+.diag .ln{font-family:var(--mono);color:var(--muted);flex:none;min-width:3.6rem}
+.diag.error .ln{color:var(--red)} .diag.warn .ln{color:var(--warn)}
+.diag.info{color:var(--muted)}
+
+/* right */
+.fhead{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.75rem;border-bottom:1px solid var(--line)}
+.fhead .def{font-family:var(--math);font-size:1.12rem;flex-basis:100%;overflow-x:auto;white-space:nowrap;padding:.1rem 0}
+.badge{font-size:.8rem;padding:.12rem .55rem;border-radius:999px;border:1px solid currentColor}
+.badge.pr{color:var(--green)} .badge.pa{color:var(--mu)} .badge.er{color:var(--red)}
+.tabs{display:flex;gap:.25rem;padding:.4rem .5rem 0;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{border:0;background:none;padding:.5rem .8rem;border-bottom:2px solid transparent;color:var(--muted);white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--blue);font-weight:700}
+.view{padding:1rem;min-height:340px}
+.empty{color:var(--muted);padding:1.5rem .25rem;max-width:36rem}
+
+/* math */
+.math{font-family:var(--math);font-size:1.12rem}
+.ss{display:inline-flex;flex-direction:column;vertical-align:.62em;line-height:1;font-size:.64em;margin-left:.05em}
+.ss sup,.ss sub{position:static;vertical-align:baseline;font-size:1em;line-height:1}
+.m-prim{font-style:italic} .m-rho{color:var(--rho)} .m-mu{color:var(--mu)} .m-op{color:var(--muted)}
+.m-name{color:var(--name)}
+.eqs{border-collapse:collapse;margin:.5rem 0 1rem}
+.eqs td{padding:.3rem .4rem;vertical-align:baseline;white-space:nowrap}
+.eqs td.l{text-align:right} .eqs td.eq{color:var(--muted)}
+.note{color:var(--muted);font-size:.9rem;max-width:44rem}
+.uses{margin-top:1.25rem;border-top:1px solid var(--line);padding-top:.75rem}
+.uses h3,.view h3{font:700 .95rem var(--ui);margin:.25rem 0 .5rem}
+.link{border:0;background:none;padding:0;color:var(--blue);text-decoration:underline;text-underline-offset:2px}
+.scroll{overflow-x:auto}
+
+/* tree */
+.treebar{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:.5rem;color:var(--muted);font-size:.85rem}
+.legend{display:flex;gap:.75rem;flex-wrap:wrap}
+.legend i{display:inline-block;width:.8rem;height:.8rem;border-radius:3px;margin-right:.3rem;vertical-align:-.1rem;border:1.5px solid}
+.tree-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--sunk);max-height:66vh}
+svg.tree{display:block}
+svg.tree .edge{stroke:var(--line);stroke-width:1.5;fill:none}
+svg.tree .elab{font:italic 12px var(--math);fill:var(--muted)}
+svg.tree .nd rect{stroke-width:1.5}
+svg.tree .nd text.lab{font:16px var(--math);fill:var(--ink);dominant-baseline:central;text-anchor:middle}
+svg.tree .nd text.ar{font:12px var(--ui);fill:var(--muted);text-anchor:middle}
+svg.tree .nd{cursor:pointer}
+svg.tree .nd:hover rect{stroke-width:2.5}
+.n-prim rect{fill:var(--surface);stroke:var(--prim)}
+.n-comp rect{fill:color-mix(in srgb,var(--blue) 12%,var(--surface));stroke:var(--blue)}
+.n-rho rect{fill:color-mix(in srgb,var(--rho) 14%,var(--surface));stroke:var(--rho)}
+.n-mu rect{fill:color-mix(in srgb,var(--mu) 14%,var(--surface));stroke:var(--mu)}
+.n-ref rect{fill:var(--surface);stroke:var(--name);stroke-dasharray:4 3}
+.n-ref.open rect{stroke-dasharray:none}
+.lg-prim{border-color:var(--prim)} .lg-comp{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,var(--surface))}
+.lg-rho{border-color:var(--rho);background:color-mix(in srgb,var(--rho) 14%,var(--surface))} .lg-mu{border-color:var(--mu);background:color-mix(in srgb,var(--mu) 14%,var(--surface))}
+.lg-ref{border-color:var(--name);border-style:dashed!important}
+
+/* trace */
+.runbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem}
+.runbar .call{font-family:var(--math);font-size:1.1rem}
+.result{font-family:var(--math);font-size:1.25rem;margin:.25rem 0 .75rem}
+.result.bad{color:var(--mu)}
+.trace{font-family:var(--math);font-size:1rem}
+.trace details{margin-left:1.1rem;border-left:1px solid var(--line);padding-left:.5rem}
+.trace > details{margin-left:0;border-left:0;padding-left:0}
+.trace summary{cursor:pointer;padding:.12rem 0;white-space:nowrap}
+.trace .leaf{margin-left:1.1rem;padding:.12rem 0 .12rem .5rem;border-left:1px solid var(--line);white-space:nowrap}
+.role{display:inline-block;font:12px var(--ui);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:0 .3rem;margin-right:.35rem;vertical-align:.08em}
+.val{color:var(--green)} .val.u{color:var(--mu)}
+.more{margin-left:1.6rem;color:var(--muted);font:13px var(--ui);padding:.12rem 0}
+
+/* table */
+table.vt{border-collapse:collapse;font-family:var(--math);font-size:1rem}
+table.vt th,table.vt td{border:1px solid var(--line);padding:.25rem .55rem;text-align:center;min-width:2.4rem}
+table.vt th{background:var(--sunk);font-weight:400;color:var(--muted)}
+table.vt td.u{color:var(--mu)}
+table.vt td.x{color:var(--blue);font-weight:600}
+.tsum{margin:.75rem 0 0;color:var(--muted);font-size:.92rem;max-width:44rem}
+
+/* checks */
+table.ck{border-collapse:collapse;width:100%;font-size:.93rem}
+table.ck th{text-align:left;color:var(--muted);font-weight:400;border-bottom:1px solid var(--line);padding:.35rem .5rem}
+table.ck td{border-bottom:1px solid var(--line);padding:.4rem .5rem;vertical-align:baseline}
+table.ck td.m{font-family:var(--math);font-size:1.02rem;white-space:nowrap}
+.ok{color:var(--green);font-weight:700} .no{color:var(--red);font-weight:700} .na{color:var(--muted)}
+
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:0;width:min(860px,94vw);max-height:88vh}
+dialog::backdrop{background:rgba(10,14,20,.45)}
+.dlg-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.1rem;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1}
+.dlg-head h2{margin:0;font:600 1.25rem var(--math);flex:1}
+.dlg-body{padding:1rem 1.1rem 1.25rem;overflow:auto}
+.libitem{padding:.75rem 0;border-bottom:1px solid var(--line)}
+.libitem:last-child{border-bottom:0}
+.libitem .t{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+.libitem .nm{font:600 1.1rem var(--math);color:var(--name)}
+.libitem .desc{color:var(--muted)}
+.libitem .defn{font-family:var(--math);font-size:1.05rem;margin-top:.25rem;overflow-x:auto;white-space:nowrap}
+.lock{font-size:.78rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 .45rem}
+.lock.on{color:var(--green);border-color:var(--green)}
+.ref p,.ref li{max-width:46rem}
+.ref h3{margin-top:1.25rem}
+.ref code,.kbd{font-family:var(--mono);font-size:.88em;background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:0 .3rem}
+.ref table{border-collapse:collapse;margin:.5rem 0}
+.ref td{border-bottom:1px solid var(--line);padding:.3rem .6rem .3rem 0;vertical-align:top}
+.instr textarea{width:100%;height:16rem;font:13px/1.55 var(--mono);background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:.6rem;white-space:pre;tab-size:2}
+.unl{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.4rem .9rem;margin:.6rem 0}
+.unl label{display:flex;gap:.5rem;align-items:baseline}
+.unl .tp{color:var(--muted);font-size:.85rem}
+.status{font-size:.9rem;color:var(--muted);min-height:1.4em}
+.status.err{color:var(--red)}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.6rem 0}
+.toast{position:fixed;left:50%;bottom:calc(1.25rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:.55rem .9rem;border-radius:10px;display:flex;gap:.9rem;align-items:center;z-index:20}
+.toast button{background:none;border:0;color:inherit;text-decoration:underline;font-weight:700}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><h1>Recursive functions <span class="g">ρ</span> <span class="m">μ</span></h1><span>Visualizer</span></div>
+  <div class="tools">
+    <span class="pill" id="previewPill" hidden>Previewing as a student</span>
+    <label class="sr" for="exampleSel">Examples</label>
+    <select id="exampleSel"><option value="">Load an example…</option></select>
+    <button class="btn" id="libBtn">Prebuilt functions</button>
+    <button class="btn" id="refBtn">Reference</button>
+    <button class="btn" id="instrBtn" hidden>Instructor</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel" aria-label="Editor">
+    <div class="panel-head">
+      <button class="btn ins" data-ins=" ∘ " title="Composition (or type .)">∘</button>
+      <button class="btn ins" data-ins="ρ(" title="Primitive recursion (or type rho)">ρ</button>
+      <button class="btn ins" data-ins="μ(" title="Minimization (or type mu)">μ</button>
+      <button class="btn ins" data-ins="⊥" title="Undefined, for expected values">⊥</button>
+      <span class="spacer"></span>
+      <label class="lim">Step limit
+        <select id="limitSel"><option value="10000">10 000</option><option value="100000">100 000</option><option value="1000000" selected>1 000 000</option><option value="10000000">10 000 000</option></select>
+      </label>
+    </div>
+    <div class="ed">
+      <div class="gutter" id="gutter" aria-hidden="true"></div>
+      <div class="ed-inner">
+        <pre class="hl" id="hl" aria-hidden="true"></pre>
+        <textarea id="src" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Function definitions"></textarea>
+      </div>
+    </div>
+    <div class="diags" id="diags" role="list" aria-label="Problems"></div>
+  </section>
+
+  <section class="panel" aria-label="Function">
+    <div class="fhead">
+      <label class="sr" for="fnSel">Function</label>
+      <select id="fnSel"></select>
+      <span id="fnType" class="math"></span>
+      <span id="fnBadge"></span>
+      <div class="def" id="fnDef"></div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="eq" aria-selected="true">Equations</button>
+      <button class="tab" role="tab" data-tab="tree" aria-selected="false">Construction tree</button>
+      <button class="tab" role="tab" data-tab="trace" aria-selected="false">Evaluate</button>
+      <button class="tab" role="tab" data-tab="table" aria-selected="false">Value table</button>
+      <button class="tab" role="tab" data-tab="checks" aria-selected="false">Checks <span id="ckCount"></span></button>
+    </div>
+    <div class="view" id="view"></div>
+  </section>
+</main>
+
+<dialog id="libDlg" aria-labelledby="libTitle">
+  <div class="dlg-head"><h2 id="libTitle">Prebuilt functions</h2><button class="btn" data-close>Close</button></div>
+  <div class="dlg-body" id="libBody"></div>
+</dialog>
+
+<dialog id="refDlg" aria-labelledby="refTitle">
+  <div class="dlg-head"><h2 id="refTitle">Reference</h2><button class="btn" data-close>Close</button></div>
+  <div class="dlg-body ref">
+    <h3>Writing functions</h3>
+    <table>
+      <tr><td><code>S</code></td><td class="math">successor, <i>S</i>(<i>n</i>) = <i>n</i> + 1</td></tr>
+      <tr><td><code>C(k,c)</code> or <code>C^k_c</code></td><td class="math">constant, <i>C</i><span class="ss"><sup>k</sup><sub>c</sub></span>(<i>n</i><sub>1</sub>, …, <i>n<sub>k</sub></i>) = <i>c</i>, for any <i>k</i> ≥ 0</td></tr>
+      <tr><td><code>P(k,i)</code> or <code>P^k_i</code></td><td class="math">projection, <i>P</i><span class="ss"><sup>k</sup><sub>i</sub></span>(<i>n</i><sub>1</sub>, …, <i>n<sub>k</sub></i>) = <i>n<sub>i</sub></i>, for 1 ≤ <i>i</i> ≤ <i>k</i></td></tr>
+      <tr><td><code>g ∘ (h1, …, hk)</code></td><td>composition; type <code>.</code> instead of <code>∘</code> if you like. <code>g ∘ h</code> for one function; <code>S ∘ S ∘ P(3,3)</code> means <code>S ∘ (S ∘ P(3,3))</code></td></tr>
+      <tr><td><code>rho(g, h)</code> or <code>ρ(g, h)</code></td><td>primitive recursion</td></tr>
+      <tr><td><code>mu(g)</code> or <code>μ(g)</code></td><td>minimization</td></tr>
+      <tr><td><code>Name = …</code></td><td>define a function; later lines can use it by name</td></tr>
+      <tr><td><code>Name(2, 3)</code></td><td>evaluate it (listed under Checks)</td></tr>
+      <tr><td><code>Name(2, 3) = 5</code></td><td>a check; use <code>⊥</code> or <code>undefined</code> when no value is expected</td></tr>
+      <tr><td><code>// …</code></td><td>comment</td></tr>
+    </table>
+
+    <h3>Definitions used by this tool</h3>
+    <p><b>Composition.</b> For <span class="math"><i>g</i> : ℕ<sub>0</sub><sup>k</sup> → ℕ<sub>0</sub></span> and <span class="math"><i>h<sub>i</sub></i> : ℕ<sub>0</sub><sup>m</sup> → ℕ<sub>0</sub></span>, <span class="math"><i>f</i> = <i>g</i> ∘ (<i>h</i><sub>1</sub>, …, <i>h<sub>k</sub></i>)</span> is <span class="math"><i>f</i>(<i>x̄</i>) = <i>g</i>(<i>h</i><sub>1</sub>(<i>x̄</i>), …, <i>h<sub>k</sub></i>(<i>x̄</i>))</span>. It is defined only where every <i>h<sub>i</sub></i>(<i>x̄</i>) is defined and <i>g</i> is defined at those values.</p>
+    <p><b>Primitive recursion</b> runs on the last argument. For <span class="math"><i>g</i> : ℕ<sub>0</sub><sup>m</sup> → ℕ<sub>0</sub></span> and <span class="math"><i>h</i> : ℕ<sub>0</sub><sup>m+2</sup> → ℕ<sub>0</sub></span>, <span class="math"><i>f</i> = ρ(<i>g</i>, <i>h</i>)</span> is <span class="math"><i>f</i>(<i>x̄</i>, 0) = <i>g</i>(<i>x̄</i>)</span> and <span class="math"><i>f</i>(<i>x̄</i>, <i>n</i> + 1) = <i>h</i>(<i>x̄</i>, <i>n</i>, <i>f</i>(<i>x̄</i>, <i>n</i>))</span>. When <i>m</i> = 0, <i>g</i> is a constant <span class="math"><i>C</i><span class="ss"><sup>0</sup><sub>c</sub></span></span>.</p>
+    <p><b>Minimization.</b> For <span class="math"><i>g</i> : ℕ<sub>0</sub><sup>m+1</sup> → ℕ<sub>0</sub></span>, <span class="math"><i>f</i> = μ(<i>g</i>)</span> has <span class="math"><i>f</i>(<i>x̄</i>) = <i>z</i></span> when <span class="math"><i>g</i>(<i>x̄</i>, <i>z</i>) = 0</span> and, for every <span class="math"><i>k</i> &lt; <i>z</i></span>, <span class="math"><i>g</i>(<i>x̄</i>, <i>k</i>)</span> is defined and nonzero. If there is no such <i>z</i>, <span class="math"><i>f</i>(<i>x̄</i>)</span> is undefined (written ⊥). The tool evaluates <span class="math"><i>g</i>(<i>x̄</i>, 0), <i>g</i>(<i>x̄</i>, 1), …</span> in order, which is exactly this rule.</p>
+
+    <h3>Names for the classes</h3>
+    <p>The <b>primitive recursive</b> functions are built from the initial functions with composition and primitive recursion; they are all total. Adding minimization gives the <b>partial recursive</b> (μ-recursive) functions, which may be undefined at some inputs. A partial recursive function that is defined at every input is a <b>recursive</b> (total recursive) function. So every primitive recursive function is recursive, and every recursive function is partial recursive.</p>
+    <p>The tool labels a definition by how it was built: “primitive recursive” if no μ is used anywhere in it, otherwise “partial recursive (uses μ)”. A function built with μ can still be total, or even primitive recursive by a different construction; the value table shows where it was defined on the inputs tried.</p>
+
+    <h3>Ackermann’s function</h3>
+    <p class="math"><i>A</i>(0, <i>n</i><sub>2</sub>) = <i>n</i><sub>2</sub> + 1, &nbsp; <i>A</i>(<i>n</i><sub>1</sub> + 1, 0) = <i>A</i>(<i>n</i><sub>1</sub>, 1), &nbsp; <i>A</i>(<i>n</i><sub>1</sub> + 1, <i>n</i><sub>2</sub> + 1) = <i>A</i>(<i>n</i><sub>1</sub>, <i>A</i>(<i>n</i><sub>1</sub> + 1, <i>n</i><sub>2</sub>))</p>
+    <p>In closed form, <span class="math"><i>A</i>(<i>n</i><sub>1</sub>, <i>n</i><sub>2</sub>) = 2 ↑<sup><i>n</i><sub>1</sub>−2</sup> (<i>n</i><sub>2</sub> + 3) − 3</span>, reading <span class="math">2 ↑<sup>−1</sup> <i>x</i> = 2 + <i>x</i></span> and <span class="math">2 ↑<sup>0</sup> <i>x</i> = 2<i>x</i></span>. For example <span class="math"><i>A</i>(1, <i>n</i>) = <i>n</i> + 2</span>, <span class="math"><i>A</i>(2, <i>n</i>) = 2<i>n</i> + 3</span>, <span class="math"><i>A</i>(3, <i>n</i>) = 2<sup><i>n</i>+3</sup> − 3</span>. It is recursive but not primitive recursive.</p>
+
+    <h3>About “no value within the step limit”</h3>
+    <p>Each application of S, C or P, each composition, each recursion step and each μ trial counts as one step. When a μ search reaches the step limit without finding a zero, the tool can’t tell whether a zero comes later or never comes; it shows the input as having no value so far. Raise the step limit to search further.</p>
+  </div>
+</dialog>
+
+<dialog id="instrDlg" aria-labelledby="instrTitle" class="instr">
+  <div class="dlg-head"><h2 id="instrTitle">Course library</h2><button class="btn" data-close>Close</button></div>
+  <div class="dlg-body">
+    <p class="note">Only you see this panel. Students see a prebuilt function, and can use it by name, only after you unlock it and update their library. Locked definitions are stored privately for you and are never sent to students.</p>
+    <div class="row"><label><input type="checkbox" id="previewChk"> Preview the page as a student</label></div>
+    <h3>Unlocked for students</h3>
+    <div class="unl" id="unlList"></div>
+    <div class="row">
+      <button class="btn primary" id="publishBtn">Update students’ library</button>
+      <button class="btn" id="saveBtn">Save without updating students</button>
+      <span class="status" id="instrStatus"></span>
+    </div>
+    <p class="status" id="pubStatus"></p>
+    <h3>Library definitions</h3>
+    <p class="note">Same language as the editor. A comment line directly above a definition becomes its description; <code class="kbd">display Name "text"</code> sets how a name is shown.</p>
+    <textarea id="libSrc" spellcheck="false" wrap="off" aria-label="Library definitions"></textarea>
+    <div class="diags" id="libDiags"></div>
+    <h3>Standalone copy</h3>
+    <p class="note">For an offline <code class="kbd">index.html</code>, copy this block over the empty <code class="kbd">&lt;script type="text/x-recfn-library"&gt;</code> tag near the top of the file. It contains only the unlocked functions.</p>
+    <div class="row"><button class="btn" id="exportBtn">Show block</button></div>
+    <textarea id="exportOut" readonly hidden style="height:10rem"></textarea>
+  </div>
+</dialog>
+<script>
+/* ===== Recursive functions engine (no DOM) ===== */
+const RF = (() => {
+  const SUPD = '⁰¹²³⁴⁵⁶⁷⁸⁹', SUBD = '₀₁₂₃₄₅₆₇₈₉';
+  const sup = n => String(n).split('').map(d => SUPD[d]).join('');
+  const sub = n => String(n).split('').map(d => SUBD[d]).join('');
+  const RESERVED = new Set(['S', 'C', 'P', 'rho', 'mu', 'display', 'undefined']);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  /* ---------- lexer ---------- */
+  function lex(src) {
+    const toks = []; let i = 0, line = 1, ls = 0; const n = src.length;
+    const mk = (type, val, s, l) => ({ type, val, start: s, end: i, line: l, col: s - ls + 1 });
+    while (i < n) {
+      const ch = src[i], s = i;
+      if (ch === '\n') { i++; toks.push(mk('nl', '\n', s, line)); line++; ls = i; continue; }
+      if (ch === ' ' || ch === '\t' || ch === '\r') { i++; continue; }
+      if (ch === '/' && src[i + 1] === '/') { while (i < n && src[i] !== '\n') i++; toks.push(mk('comment', src.slice(s, i), s, line)); continue; }
+      if (/[A-Za-z]/.test(ch)) { while (i < n && /[A-Za-z0-9_]/.test(src[i])) i++; toks.push(mk('id', src.slice(s, i), s, line)); continue; }
+      if (/[0-9]/.test(ch)) { while (i < n && /[0-9]/.test(src[i])) i++; toks.push(mk('num', src.slice(s, i), s, line)); continue; }
+      if (ch === '"') { i++; while (i < n && src[i] !== '"' && src[i] !== '\n') i++; const closed = src[i] === '"'; if (closed) i++; const t = mk('str', src.slice(s + 1, closed ? i - 1 : i), s, line); t.unclosed = !closed; toks.push(t); continue; }
+      if ('(),=∘.^_ρμ⊥'.includes(ch)) { i++; toks.push(mk('sym', ch, s, line)); continue; }
+      i++; toks.push(mk('bad', ch, s, line));
+    }
+    return toks;
+  }
+
+  /* ---------- statements ---------- */
+  function statements(toks) {
+    const out = []; let cur = [], depth = 0;
+    for (const t of toks) {
+      if (t.type === 'comment') continue;
+      if (t.type === 'nl') { if (depth > 0) continue; if (cur.length) out.push(cur); cur = []; continue; }
+      if (t.type === 'sym' && t.val === '(') depth++;
+      if (t.type === 'sym' && t.val === ')') depth = Math.max(0, depth - 1);
+      cur.push(t);
+    }
+    if (cur.length) out.push(cur);
+    return out;
+  }
+
+  class PErr { constructor(msg, tok) { this.msg = msg; this.tok = tok; } }
+
+  function parseStatement(ts) {
+    let p = 0;
+    const peek = (o = 0) => ts[p + o];
+    const isSym = (t, v) => t && t.type === 'sym' && t.val === v;
+    const last = ts[ts.length - 1];
+    const fail = (msg, t) => { throw new PErr(msg, t || peek() || last); };
+    const expectSym = (v, what) => { const t = peek(); if (!isSym(t, v)) fail(`Expected "${v}"${what ? ' ' + what : ''}` + (t ? `, found "${t.val}"` : ' at the end of the line'), t); p++; return t; };
+    const expectNum = what => { const t = peek(); if (!t || t.type !== 'num') fail(`Expected a number ${what}` + (t ? `, found "${t.val}"` : ''), t); p++; return t; };
+    const span = (node, a, b) => { node.s = a.start; node.e = b.end; node.line = a.line; return node; };
+
+    function primary() {
+      const t = peek();
+      if (!t) fail('Expected a function at the end of the line', last);
+      if (t.type === 'id' || (t.type === 'sym' && (t.val === 'ρ' || t.val === 'μ'))) {
+        const v = t.val; p++;
+        if (v === 'S') return span({ t: 'S' }, t, t);
+        if (v === 'C' || v === 'P') {
+          let a, b;
+          if (isSym(peek(), '(')) { p++; a = expectNum(`for k in ${v}(k, ${v === 'C' ? 'c' : 'i'})`); expectSym(','); b = expectNum(v === 'C' ? 'for the constant c' : 'for the position i'); var end = expectSym(')'); }
+          else if (isSym(peek(), '^')) { p++; a = expectNum('after ^'); expectSym('_', `in ${v}^k_${v === 'C' ? 'c' : 'i'}`); b = expectNum('after _'); var end = b; }
+          else fail(`Write ${v}(k, ${v === 'C' ? 'c' : 'i'}) — for example ${v === 'C' ? 'C(1,0)' : 'P(3,1)'}`, peek() || t);
+          const k = +a.val, x = +b.val;
+          return v === 'C' ? span({ t: 'C', k, c: x }, t, end) : span({ t: 'P', k, i: x }, t, end);
+        }
+        if (v === 'rho' || v === 'ρ') { expectSym('(', 'after ρ'); const g = expr(); expectSym(',', 'between g and h in ρ(g, h)'); const h = expr(); const end = expectSym(')', 'to close ρ(g, h)'); return span({ t: 'rho', g, h }, t, end); }
+        if (v === 'mu' || v === 'μ') { expectSym('(', 'after μ'); const g = expr(); const end = expectSym(')', 'to close μ(g)'); return span({ t: 'mu', g }, t, end); }
+        if (v === 'display' || v === 'undefined') fail(`"${v}" can't be used as a function name`, t);
+        return span({ t: 'ref', name: v }, t, t);
+      }
+      if (isSym(t, '(')) {
+        p++; const items = [expr()];
+        while (isSym(peek(), ',')) { p++; items.push(expr()); }
+        const end = expectSym(')');
+        if (items.length === 1) { items[0].paren = true; return items[0]; }
+        return span({ t: 'tuple', items }, t, end);
+      }
+      fail(`Expected a function, found "${t.val}"`, t);
+    }
+    function expr() {
+      const left = primary();
+      const t = peek();
+      if (t && t.type === 'sym' && (t.val === '∘' || t.val === '.')) {
+        p++;
+        if (left.t === 'tuple') fail('A list (h₁, …, hₖ) can only come after ∘, not before it', t);
+        const right = expr();
+        const hs = right.t === 'tuple' && !right.paren2 ? right.items : [right];
+        const node = { t: 'comp', g: left, hs, s: left.s, e: right.e, line: left.line };
+        return node;
+      }
+      return left;
+    }
+
+    const t0 = peek(), t1 = peek(1);
+    if (t0.type === 'id' && t0.val === 'display') {
+      p++; const nm = peek(); if (!nm || nm.type !== 'id') fail('Write display Name "text"', nm || t0); p++;
+      const st = peek(); if (!st || st.type !== 'str') fail('Write display Name "text" with the text in quotes', st || nm); p++;
+      if (peek()) fail(`Unexpected "${peek().val}"`);
+      return { kind: 'display', name: nm.val, text: st.val, line: t0.line };
+    }
+    if (t0.type === 'id' && isSym(t1, '=')) {
+      p += 2;
+      if (RESERVED.has(t0.val)) fail(`"${t0.val}" is a built-in name; choose another name`, t0);
+      if (!peek()) fail('Expected a function after =', t1);
+      const ast = expr();
+      if (peek()) fail(`Unexpected "${peek().val}" — each definition goes on its own line`, peek());
+      if (ast.t === 'tuple') fail('A list (h₁, …, hₖ) must come after ∘, as in g ∘ (h₁, …, hₖ)', t0);
+      return { kind: 'def', name: t0.val, ast, line: t0.line, endLine: last.line, s: t0.start, e: last.end, nameTok: t0 };
+    }
+    if (t0.type === 'id' && isSym(t1, '(')) {
+      p += 2; const args = [];
+      if (!isSym(peek(), ')')) {
+        for (;;) { const a = expectNum('as an argument (arguments are natural numbers)'); args.push(+a.val); if (isSym(peek(), ',')) { p++; continue; } break; }
+      }
+      expectSym(')', 'to close the argument list');
+      let expected;
+      if (isSym(peek(), '=')) {
+        p++; const v = peek();
+        if (v && v.type === 'num') { expected = +v.val; p++; }
+        else if (v && (isSym(v, '⊥') || (v.type === 'id' && v.val === 'undefined'))) { expected = 'undef'; p++; }
+        else fail('After = write the expected value: a number, or ⊥ (undefined)', v);
+      }
+      if (peek()) fail(`Unexpected "${peek().val}"`);
+      return { kind: 'eval', name: t0.val, args, expected, line: t0.line, s: t0.start, e: last.end };
+    }
+    if (t0.type === 'id' && !t1) fail(`Write ${t0.val} = … to define it, or ${t0.val}(…) to evaluate it`, t0);
+    fail(t0.type === 'id' ? `Expected = or ( after ${t0.val}` : `A line starts with a name: Name = … or Name(…)`, t0.type === 'id' ? t1 : t0);
+  }
+
+  function parseSource(src) {
+    const toks = lex(src);
+    const stmts = [], diags = [];
+    for (const t of toks) if (t.type === 'bad') diags.push({ sev: 'error', line: t.line, msg: `Unknown character "${t.val}"` });
+    for (const ts of statements(toks)) {
+      if (ts.some(t => t.type === 'bad')) continue;
+      try { stmts.push(parseStatement(ts)); }
+      catch (e) { if (e instanceof PErr) diags.push({ sev: 'error', line: e.tok.line, col: e.tok.col, msg: e.msg }); else throw e; }
+    }
+    return { toks, stmts, diags };
+  }
+
+  /* ---------- analysis ---------- */
+  function walk(node, f) { f(node); if (node.t === 'comp') { walk(node.g, f); node.hs.forEach(h => walk(h, f)); } else if (node.t === 'rho') { walk(node.g, f); walk(node.h, f); } else if (node.t === 'mu') walk(node.g, f); else if (node.t === 'tuple') node.items.forEach(x => walk(x, f)); }
+
+  // scopes: array of {defs: Map, origin}; lookup searches in order.
+  function analyzeScope(parsed, origin, outer) {
+    const defs = new Map(), diags = [...parsed.diags], evals = [], displays = new Map();
+    for (const st of parsed.stmts) {
+      if (st.kind === 'display') { displays.set(st.name, st.text); continue; }
+      if (st.kind === 'eval') { evals.push(st); continue; }
+      if (defs.has(st.name)) { diags.push({ sev: 'error', line: st.line, msg: `${st.name} is already defined on line ${defs.get(st.name).line}` }); continue; }
+      const d = { name: st.name, ast: st.ast, line: st.line, endLine: st.endLine, origin, arity: null, err: null, deps: new Set(), usesMu: false, state: 0, s: st.s, e: st.e };
+      defs.set(st.name, d);
+      if (outer && outer.has(st.name)) diags.push({ sev: 'info', line: st.line, msg: `Your ${st.name} replaces the prebuilt ${st.name} in this file` });
+    }
+    const lookup = name => defs.get(name) || (outer && outer.get(name)) || null;
+    const errs = [];
+    function arityOf(d) {
+      if (d.state === 2) return d.arity;
+      if (d.state === 1) throw { cycle: d };
+      d.state = 1;
+      try { d.arity = nodeArity(d.ast, d); }
+      catch (e) {
+        if (e.cycle) { d.state = 2; d.err = e.cycle === d ? `${d.name} refers to itself. Use ρ(g, h) for recursion.` : `${d.name} is part of a circular definition (via ${e.cycle.name})`; errs.push({ d, msg: d.err, node: null }); d.arity = null; return null; }
+        d.state = 2; d.err = e.msg; errs.push({ d, msg: e.msg, node: e.node, dep: e.dep }); d.arity = null; return null;
+      }
+      d.state = 2; return d.arity;
+    }
+    const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+    function nodeArity(node, d) {
+      const E = (msg, extra) => { throw Object.assign({ msg, node }, extra || {}); };
+      let a;
+      switch (node.t) {
+        case 'S': a = 1; break;
+        case 'C': a = node.k; break;
+        case 'P': if (node.k < 1) E(`P(k, i) needs k ≥ 1`); if (node.i < 1 || node.i > node.k) E(`P(${node.k}, ${node.i}): the position i must be between 1 and ${node.k}`); a = node.k; break;
+        case 'tuple': E('A list (h₁, …, hₖ) can only come right after ∘');
+        case 'ref': {
+          const t = lookup(node.name);
+          if (!t) E(`Unknown function ${node.name}. Define it first with ${node.name} = …`);
+          node.target = t; d.deps.add(t.name);
+          let ta;
+          if (t.origin === d.origin || t.state !== 2) { try { ta = arityOf(t); } catch (e) { throw e; } }
+          else ta = t.arity;
+          if (ta === null) E(`${node.name} has an error (line ${t.line}${t.origin !== d.origin ? ', prebuilt' : ''}), so ${d.name} can't be checked`, { dep: true });
+          if (t.usesMu) d.usesMu = true;
+          a = ta; break;
+        }
+        case 'comp': {
+          const ag = nodeArity(node.g, d), k = node.hs.length;
+          const hs = node.hs.map(h => nodeArity(h, d));
+          if (ag !== k) E(`In g ∘ (h₁, …, hₖ), g must take one argument per hᵢ: here g takes ${plural(ag, 'argument')} but ${plural(k, 'function')} ${k === 1 ? 'is' : 'are'} composed into it`);
+          if (k > 1 && hs.some(x => x !== hs[0])) E(`In g ∘ (h₁, …, hₖ), every hᵢ must take the same number of arguments; here they take ${hs.join(', ')}`);
+          a = hs[0]; break;
+        }
+        case 'rho': {
+          const m = nodeArity(node.g, d), ah = nodeArity(node.h, d);
+          if (ah !== m + 2) E(`In ρ(g, h), g takes m = ${m} argument${m === 1 ? '' : 's'}, so h must take m + 2 = ${m + 2} (n₁, …, nₘ, n, f(…)); this h takes ${ah}`);
+          a = m + 1; break;
+        }
+        case 'mu': {
+          d.usesMu = true;
+          const ag = nodeArity(node.g, d);
+          if (ag < 1) E('In μ(g), g must take at least one argument (the search variable is its last argument)');
+          a = ag - 1; break;
+        }
+      }
+      node.arity = a; return a;
+    }
+    for (const d of defs.values()) arityOf(d);
+    // mu-use propagation (deps may be resolved after)
+    let changed = true;
+    while (changed) { changed = false; for (const d of defs.values()) if (!d.usesMu) for (const dep of d.deps) { const t = lookup(dep); if (t && t.usesMu) { d.usesMu = true; changed = true; } } }
+    for (const e of errs) diags.push({ sev: e.dep ? 'warn' : 'error', line: e.node && e.node.line || e.d.line, msg: e.msg, s: e.node && e.node.s, e: e.node && e.node.e });
+    for (const ev of evals) {
+      const t = lookup(ev.name);
+      if (!t) { ev.err = `Unknown function ${ev.name}`; diags.push({ sev: 'error', line: ev.line, msg: ev.err }); continue; }
+      ev.def = t;
+      if (t.arity !== null && t.arity !== ev.args.length) { ev.err = `${ev.name} takes ${plural(t.arity, 'argument')}, but ${ev.args.length} ${ev.args.length === 1 ? 'is' : 'are'} given`; diags.push({ sev: 'error', line: ev.line, msg: ev.err }); }
+    }
+    diags.sort((a, b) => a.line - b.line);
+    return { defs, diags, evals, displays, lookup };
+  }
+
+  function analyze(userSrc, libSrc) {
+    const lp = parseSource(libSrc || '');
+    const lib = analyzeScope(lp, 'lib', null);
+    const up = parseSource(userSrc || '');
+    const user = analyzeScope(up, 'user', lib.defs);
+    const displays = new Map([...lib.displays, ...user.displays]);
+    return { lib, user, libParsed: lp, userParsed: up, displays };
+  }
+
+  /* ---------- evaluation ---------- */
+  const LIMIT = { limit: true };
+  function evaluate(def, args, limit, opts) {
+    opts = opts || {};
+    let steps = 0, recCount = 0;
+    const cap = opts.trace ? (opts.cap || 2500) : 0;
+    const KIDCAP = 300;
+    const mkNode = (kind, node, a, role, name) => ({ kind, node, args: a.slice(), role, name, kids: [], val: undefined, more: 0 });
+    function rec(parent, kind, node, a, role, name) {
+      if (!parent) return null;
+      if (recCount >= cap || parent.kids.length >= KIDCAP) { parent.more++; return null; }
+      recCount++; const n = mkNode(kind, node, a, role, name); parent.kids.push(n); return n;
+    }
+    function ev(node, a, P, role) {
+      if (++steps > limit) throw LIMIT;
+      switch (node.t) {
+        case 'S': { const v = a[0] + 1; if (P) { const r = rec(P, 'prim', node, a, role); if (r) r.val = v; } return v; }
+        case 'C': { if (P) { const r = rec(P, 'prim', node, a, role); if (r) r.val = node.c; } return node.c; }
+        case 'P': { const v = a[node.i - 1]; if (P) { const r = rec(P, 'prim', node, a, role); if (r) r.val = v; } return v; }
+        case 'ref': {
+          const r = P ? rec(P, 'call', node, a, role, node.name) : null;
+          const v = body(node.target.ast, a, r);
+          if (r) r.val = v; return v;
+        }
+        default: {
+          const r = P ? rec(P, node.t, node, a, role) : null;
+          const v = body(node, a, r);
+          if (r) r.val = v; return v;
+        }
+      }
+    }
+    // evaluate node's structure, recording its parts as children of R (R = node standing for this application)
+    function body(node, a, R) {
+      switch (node.t) {
+        case 'comp': {
+          const v = new Array(node.hs.length);
+          for (let j = 0; j < node.hs.length; j++) v[j] = ev(node.hs[j], a, R, node.hs.length === 1 ? 'h' : 'h' + sub(j + 1));
+          return ev(node.g, v, R, 'g');
+        }
+        case 'rho': {
+          const m = a.length - 1, xs = a.slice(0, m), n = a[m];
+          let acc = ev(node.g, xs, R, 'base');
+          const b = xs.concat([0, 0]);
+          for (let i = 0; i < n; i++) { if (++steps > limit) throw LIMIT; b[m] = i; b[m + 1] = acc; acc = ev(node.h, b, R, 'step' + (i + 1)); }
+          return acc;
+        }
+        case 'mu': {
+          const m = a.length, b = a.concat([0]);
+          for (let z = 0; ; z++) { if (++steps > limit) throw LIMIT; b[m] = z; if (ev(node.g, b, R, 'try') === 0) return z; }
+        }
+        default: return ev(node, a, R, null);
+      }
+    }
+    const root = opts.trace ? { kids: [], more: 0 } : null;
+    try {
+      const v = ev({ t: 'ref', name: def.name, target: def }, args, root, null);
+      return { ok: true, value: v, steps, trace: root && root.kids[0], recCount };
+    } catch (e) {
+      if (e === LIMIT) return { ok: false, limit: true, steps: limit, trace: root && root.kids[0], recCount };
+      if (e instanceof RangeError) return { ok: false, deep: true, steps, trace: root && root.kids[0], recCount };
+      throw e;
+    }
+  }
+
+  /* ---------- pretty printing ---------- */
+  function dispName(name, displays) { return (displays && displays.get(name)) || name; }
+  function prettyText(node, D) {
+    switch (node.t) {
+      case 'S': return 'S';
+      case 'C': return 'C' + sup(node.k) + sub(node.c);
+      case 'P': return 'P' + sup(node.k) + sub(node.i);
+      case 'ref': return dispName(node.name, D);
+      case 'rho': return 'ρ(' + prettyText(node.g, D) + ', ' + prettyText(node.h, D) + ')';
+      case 'mu': return 'μ(' + prettyText(node.g, D) + ')';
+      case 'comp': {
+        const g = node.g.t === 'comp' ? '(' + prettyText(node.g, D) + ')' : prettyText(node.g, D);
+        const h = node.hs.length === 1 ? prettyText(node.hs[0], D) : '(' + node.hs.map(x => prettyText(x, D)).join(', ') + ')';
+        return g + ' ∘ ' + h;
+      }
+    }
+    return '?';
+  }
+  const ss = (a, b) => `<span class="ss"><sup>${a}</sup><sub>${b}</sub></span>`;
+  function prettyHTML(node, D) {
+    switch (node.t) {
+      case 'S': return '<span class="m-prim">S</span>';
+      case 'C': return '<span class="m-prim">C</span>' + ss(node.k, node.c);
+      case 'P': return '<span class="m-prim">P</span>' + ss(node.k, node.i);
+      case 'ref': return `<span class="m-name">${esc(dispName(node.name, D))}</span>`;
+      case 'rho': return '<span class="m-rho">ρ</span>(' + prettyHTML(node.g, D) + ', ' + prettyHTML(node.h, D) + ')';
+      case 'mu': return '<span class="m-mu">μ</span>(' + prettyHTML(node.g, D) + ')';
+      case 'comp': {
+        const g = node.g.t === 'comp' ? '(' + prettyHTML(node.g, D) + ')' : prettyHTML(node.g, D);
+        const h = node.hs.length === 1 ? prettyHTML(node.hs[0], D) : '(' + node.hs.map(x => prettyHTML(x, D)).join(', ') + ')';
+        return g + ' <span class="m-op">∘</span> ' + h;
+      }
+    }
+    return '?';
+  }
+  function typeHTML(a) { return a === 0 ? 'a constant (0 arguments)' : `ℕ<sub>0</sub>${a > 1 ? '<sup>' + a + '</sup>' : ''} → ℕ<sub>0</sub>`; }
+  function typeText(a) { return a === 0 ? 'ℕ₀⁰→ℕ₀' : `ℕ₀${a > 1 ? sup(a) : ''}→ℕ₀`; }
+
+  /* ---------- symbolic application (equations) ---------- */
+  const T = (s, k) => ({ s, k: k || 0 });
+  const fmt = t => t.s ? (t.k ? `${t.s} + ${t.k}` : t.s) : String(t.k);
+  function sym(node, terms, D) {
+    switch (node.t) {
+      case 'S': return T(terms[0].s, terms[0].k + 1);
+      case 'C': return T('', node.c);
+      case 'P': return terms[node.i - 1];
+      case 'ref': return T(`<span class="m-name">${esc(dispName(node.name, D))}</span>` + (terms.length ? '(' + terms.map(fmt).join(', ') + ')' : ''));
+      case 'comp': return sym(node.g, node.hs.map(h => sym(h, terms, D)), D);
+      default: return T('[' + prettyHTML(node, D) + ']' + (terms.length ? '(' + terms.map(fmt).join(', ') + ')' : ''));
+    }
+  }
+  const V = i => T(`<i>n</i><sub>${i}</sub>`);
+  function equations(def, D) {
+    const a = def.arity, ast = def.ast, F = `<span class="m-name">${esc(dispName(def.name, D))}</span>`;
+    const call = ts => F + (ts.length ? '(' + ts.map(fmt).join(', ') + ')' : '');
+    const lines = [];
+    if (ast.t === 'rho') {
+      const m = a - 1, xs = Array.from({ length: m }, (_, i) => V(i + 1)), n = T('<i>n</i>');
+      lines.push([call([...xs, T('', 0)]), fmt(sym(ast.g, xs, D))]);
+      lines.push([call([...xs, T('<i>n</i>', 1)]), fmt(sym(ast.h, [...xs, n, T(call([...xs, n]))], D))]);
+      return { lines, note: 'Primitive recursion runs on the last argument.' };
+    }
+    if (ast.t === 'mu') {
+      const xs = Array.from({ length: a }, (_, i) => a === 1 ? T('<i>n</i>') : V(i + 1)), z = T('<i>z</i>');
+      lines.push([call(xs), `min{ <i>z</i> ∈ ℕ<sub>0</sub> : ${fmt(sym(ast.g, [...xs, z], D))} = 0 }`]);
+      return { lines, note: 'The value is the least z where the expression is 0, provided it is defined (and nonzero) for every smaller z. Otherwise the function is undefined at this input.' };
+    }
+    const xs = Array.from({ length: a }, (_, i) => a === 1 ? T('<i>n</i>') : V(i + 1));
+    lines.push([call(xs), fmt(sym(ast, xs, D))]);
+    return { lines, note: '' };
+  }
+
+  /* ---------- library extraction ---------- */
+  function extract(libSrc, names, analysis) {
+    const lines = libSrc.split('\n'); const want = new Set(names); const parts = [];
+    const ds = [];
+    for (const [n, t] of analysis.lib.displays) if (want.has(n)) ds.push(`display ${n} "${t}"`);
+    if (ds.length) parts.push(ds.join('\n'));
+    const defs = [...analysis.lib.defs.values()].filter(d => want.has(d.name)).sort((a, b) => a.line - b.line);
+    for (const d of defs) {
+      let s = d.line - 1; while (s > 0 && /^\s*\/\//.test(lines[s - 1])) s--;
+      parts.push(lines.slice(s, d.endLine).join('\n'));
+    }
+    return parts.join('\n\n') + '\n';
+  }
+  function depClosure(names, analysis) {
+    const out = new Set(); const go = n => { if (out.has(n)) return; const d = analysis.lib.defs.get(n); if (!d) return; out.add(n); d.deps.forEach(go); };
+    names.forEach(go); return out;
+  }
+
+  return { lex, parseSource, analyze, evaluate, prettyText, prettyHTML, typeHTML, typeText, equations, extract, depClosure, sup, sub, esc, dispName };
+})();
+if (typeof module !== 'undefined') module.exports = RF;
+
+</script>
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const esc = RF.esc;
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const LS_KEY = 'recfn-src-v1';
+
+const EXAMPLES = [
+  { id: 'start', label: 'Composition (slide examples)', src:
+`// Initial functions: S, C(k,c), P(k,i). Build with ∘, rho (ρ) and mu (μ).
+// Write Name = … to define a function and Name(…) = value to check it.
+
+F1 = S ∘ S                  // f(n) = n + 2
+F2 = P(2,2) ∘ (S, C(1,5))   // f(n) = 5
+F3 = S ∘ P(3,3)             // f(n₁, n₂, n₃) = n₃ + 1
+
+F1(3) = 5
+F2(7) = 5
+F3(1, 2, 3) = 4
+` },
+  { id: 'rho', label: 'Primitive recursion: ρ(S, C³₃) and ρ(S, P³₂)', src:
+`// Primitive recursion runs on the last argument:
+//   f(n₁, 0)     = g(n₁)
+//   f(n₁, n + 1) = h(n₁, n, f(n₁, n))
+
+E1 = rho(S, C(3,3))   // f(n₁, 0) = n₁ + 1, f(n₁, n₂) = 3 when n₂ ≥ 1
+E2 = rho(S, P(3,2))   // f(n₁, 0) = n₁ + 1, f(n₁, n₂) = n₂ − 1 when n₂ ≥ 1
+
+E1(4, 0) = 5
+E1(4, 2) = 3
+E2(4, 0) = 5
+E2(4, 5) = 4
+` },
+  { id: 'addmult', label: 'Addition and multiplication', src:
+`// Addition and multiplication by primitive recursion.
+
+Add = rho(P(1,1), S ∘ P(3,3))
+Mult = rho(C(1,0), Add ∘ (P(3,1), P(3,3)))
+
+Add(2, 3) = 5
+Mult(3, 4) = 12
+Mult(5, 0) = 0
+` },
+  { id: 'mu', label: 'Minimization: μ(Mult), μ(Add), μ(Sub)', src:
+`// μ(g)(n) is the least z with g(n, z) = 0.
+
+M1 = mu(Mult)   // f(n) = 0
+M2 = mu(Add)    // defined only at 0
+M3 = mu(Sub)    // f(n) = n
+
+M1(5) = 0
+M2(0) = 0
+M2(1) = ⊥
+M3(4) = 4
+` },
+  { id: 'div', label: 'Floor division with μ', src:
+`// ⌊n₁ / n₂⌋ = min{ n : Is≥(n₁, (n + 1) · n₂) = 0 }
+
+Div = mu(IsGeq ∘ (P(3,1), Mult ∘ (S ∘ P(3,3), P(3,2))))
+
+Div(7, 2) = 3
+Div(6, 3) = 2
+Div(5, 0) = ⊥   // no n works when n₂ = 0
+` },
+];
+
+const S = {
+  src: store.get(LS_KEY) ?? EXAMPLES[0].src,
+  libPublic: '', publicMeta: null, libFull: null, unlocked: [], owner: false, preview: false,
+  dbReady: false, current: null, tab: 'eq', limit: 1e6, A: null, checks: [],
+  expanded: new Set(), fit: false, traceArgs: {}, traceRes: null, table: {},
+};
+const standalone = ($('#standalone-library').textContent || '').trim();
+if (standalone) S.libPublic = standalone;
+
+const ta = $('#src'), hl = $('#hl'), gutter = $('#gutter');
+ta.value = S.src;
+
+const activeLib = () => (S.owner && !S.preview && S.libFull !== null) ? S.libFull : S.libPublic;
+const D = () => S.A.displays;
+const dn = n => RF.dispName(n, D());
+
+/* ---------------- analysis ---------------- */
+let anTimer = 0, ckTimer = 0;
+function reanalyze() {
+  S.A = RF.analyze(S.src, activeLib());
+  pickCurrent();
+  renderEditor(); renderDiags(); renderFnSelect(); renderFnHead(); renderView(); updateExamples();
+  clearTimeout(ckTimer); ckTimer = setTimeout(runChecks, 250);
+}
+function allDefs() {
+  const u = [...S.A.user.defs.values()].sort((a, b) => a.line - b.line);
+  const l = [...S.A.lib.defs.values()].filter(d => !S.A.user.defs.has(d.name)).sort((a, b) => a.line - b.line);
+  return { u, l };
+}
+function pickCurrent() {
+  const { u, l } = allDefs();
+  const c = S.current;
+  if (c) { const d = c.o === 'u' ? S.A.user.defs.get(c.n) : S.A.lib.defs.get(c.n); if (d && !(c.o === 'l' && S.A.user.defs.has(c.n))) return; }
+  if (u.length) S.current = { o: 'u', n: u[u.length - 1].name };
+  else if (l.length) S.current = { o: 'l', n: l[0].name };
+  else S.current = null;
+}
+function curDef() { const c = S.current; if (!c) return null; return c.o === 'u' ? S.A.user.defs.get(c.n) : S.A.lib.defs.get(c.n); }
+
+/* ---------------- editor ---------------- */
+function tokClass(t) {
+  switch (t.type) {
+    case 'comment': return 'k-com'; case 'num': return 'k-num'; case 'str': return 'k-str'; case 'bad': return 'k-err';
+    case 'sym': return t.val === 'ρ' ? 'k-rho' : t.val === 'μ' || t.val === '⊥' ? 'k-mu' : (t.val === '∘' || t.val === '.') ? 'k-op' : '';
+    case 'id': {
+      const v = t.val;
+      if (v === 'rho') return 'k-rho'; if (v === 'mu') return 'k-mu';
+      if (v === 'S' || v === 'C' || v === 'P') return 'k-prim';
+      if (v === 'display' || v === 'undefined') return 'k-dir';
+      return 'k-name';
+    }
+  }
+  return '';
+}
+function renderEditor() {
+  const src = S.src, toks = RF.lex(src), errs = [];
+  for (const d of S.A.user.diags) {
+    if (d.sev !== 'error') continue;
+    if (d.s != null) errs.push([d.s, d.e]);
+    else if (d.col) { const t = toks.find(t => t.line === d.line && t.col === d.col && t.type !== 'nl'); if (t) errs.push([t.start, t.end]); }
+  }
+  let out = '', pos = 0;
+  for (const t of toks) {
+    if (t.type === 'nl') continue;
+    out += esc(src.slice(pos, t.start));
+    let c = tokClass(t); if (errs.some(([a, b]) => t.start < b && t.end > a)) c += ' k-err';
+    out += `<span class="${c}">${esc(src.slice(t.start, t.end))}</span>`; pos = t.end;
+  }
+  hl.innerHTML = out + esc(src.slice(pos)) + '\n ';
+  const nLines = src.split('\n').length, sev = {};
+  for (const d of S.A.user.diags) { if (d.sev === 'error') sev[d.line] = 'e'; else if (d.sev === 'warn' && !sev[d.line]) sev[d.line] = 'w'; }
+  let g = ''; for (let i = 1; i <= nLines; i++) g += `<div class="${sev[i] || ''}">${i}</div>`;
+  gutter.innerHTML = g + '<div></div>';
+  syncScroll();
+}
+function syncScroll() { hl.scrollTop = ta.scrollTop; hl.scrollLeft = ta.scrollLeft; gutter.scrollTop = ta.scrollTop; }
+ta.addEventListener('scroll', syncScroll);
+ta.addEventListener('input', () => {
+  S.src = ta.value; store.set(LS_KEY, S.src);
+  clearTimeout(anTimer); anTimer = setTimeout(reanalyze, 120);
+});
+ta.addEventListener('keydown', e => {
+  if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey) { e.preventDefault(); insertText('  '); }
+});
+function insertText(txt) {
+  const s = ta.selectionStart, e = ta.selectionEnd;
+  ta.setRangeText(txt, s, e, 'end'); ta.focus(); ta.dispatchEvent(new Event('input'));
+}
+document.querySelectorAll('[data-ins]').forEach(b => b.addEventListener('click', () => insertText(b.dataset.ins)));
+function lineHeightPx() { return parseFloat(getComputedStyle(ta).lineHeight) || 21; }
+function selectRange(s, e) {
+  ta.focus(); ta.setSelectionRange(s, e);
+  const line = S.src.slice(0, s).split('\n').length;
+  ta.scrollTop = Math.max(0, (line - 4) * lineHeightPx());
+}
+function goToLine(line) {
+  const lines = S.src.split('\n'); let off = 0; for (let i = 0; i < line - 1 && i < lines.length; i++) off += lines[i].length + 1;
+  selectRange(off, off + (lines[line - 1] || '').length);
+}
+function renderDiags() {
+  const box = $('#diags');
+  box.innerHTML = S.A.user.diags.map(d => `<button class="diag ${d.sev}" role="listitem" data-line="${d.line}"><span class="ln">line ${d.line}</span><span>${esc(d.msg)}</span></button>`).join('');
+}
+$('#diags').addEventListener('click', e => { const b = e.target.closest('.diag'); if (b) goToLine(+b.dataset.line); });
+
+/* ---------------- function header ---------------- */
+function renderFnSelect() {
+  const sel = $('#fnSel'), { u, l } = allDefs();
+  const opt = (o, d) => `<option value="${o}:${esc(d.name)}"${S.current && S.current.o === o && S.current.n === d.name ? ' selected' : ''}>${esc(dn(d.name))}${d.err ? ' (error)' : ''}</option>`;
+  let h = '';
+  if (!u.length && !l.length) h = '<option value="">No functions yet</option>';
+  if (u.length) h += `<optgroup label="Your functions">${u.map(d => opt('u', d)).join('')}</optgroup>`;
+  if (l.length) h += `<optgroup label="Prebuilt">${l.map(d => opt('l', d)).join('')}</optgroup>`;
+  sel.innerHTML = h;
+}
+$('#fnSel').addEventListener('change', e => { const v = e.target.value; if (!v) return; const i = v.indexOf(':'); setCurrent(v.slice(0, i), v.slice(i + 1)); });
+function setCurrent(o, n) { S.current = { o, n }; S.traceRes = null; renderFnSelect(); renderFnHead(); renderView(); }
+function classBadge(d) {
+  if (!d) return '';
+  if (d.err) return '<span class="badge er">Has an error</span>';
+  return d.usesMu ? '<span class="badge pa" title="Built with μ: a partial recursive function">Partial recursive (uses μ)</span>' : '<span class="badge pr" title="Built without μ">Primitive recursive</span>';
+}
+function renderFnHead() {
+  const d = curDef();
+  $('#fnType').innerHTML = d && d.arity !== null ? ': ' + RF.typeHTML(d.arity) : '';
+  $('#fnBadge').innerHTML = classBadge(d);
+  $('#fnDef').innerHTML = d ? `<span class="m-name">${esc(dn(d.name))}</span> = ${RF.prettyHTML(d.ast, D())}` : '';
+}
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => setTab(t.dataset.tab)));
+function setTab(tab) { S.tab = tab; document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === tab)); renderView(); }
+function renderView() {
+  const v = $('#view'), d = curDef();
+  if (S.tab === 'checks') return renderChecks(v);
+  if (!d) { v.innerHTML = `<p class="empty">Define a function in the editor, for example <span class="math">Add = rho(P(1,1), S ∘ P(3,3))</span>, and it appears here.</p>`; return; }
+  if (d.err) { v.innerHTML = `<p class="empty"><b>${esc(dn(d.name))}</b> can’t be shown yet: ${esc(d.err)}</p>`; return; }
+  ({ eq: renderEq, tree: renderTree, trace: renderTrace, table: renderTable })[S.tab](v, d);
+}
+
+/* ---------------- equations ---------------- */
+function eqTable(d) {
+  const q = RF.equations(d, D());
+  return `<div class="scroll"><table class="eqs math">${q.lines.map(([l, r]) => `<tr><td class="l">${l}</td><td class="eq">=</td><td>${r}</td></tr>`).join('')}</table></div>` + (q.note ? `<p class="note">${q.note}</p>` : '');
+}
+function renderEq(v, d) {
+  let h = eqTable(d);
+  h += d.usesMu
+    ? `<p class="note">${esc(dn(d.name))} is built with μ, so it is a partial recursive function. It is a (total) recursive function exactly when it is defined at every input; the value table shows where it is defined on the inputs tried.</p>`
+    : `<p class="note">${esc(dn(d.name))} is built from the initial functions with composition and primitive recursion only, so it is primitive recursive and defined at every input.</p>`;
+  const lk = S.A.user.lookup;
+  const deps = [...d.deps].map(n => (d.origin === 'user' ? lk(n) : S.A.lib.defs.get(n))).filter(Boolean);
+  if (deps.length) {
+    h += `<div class="uses"><h3>Uses</h3>` + deps.map(t => `<div style="margin-bottom:.6rem"><button class="link math" data-goto="${t.origin === 'user' ? 'u' : 'l'}:${esc(t.name)}">${esc(dn(t.name))}</button> <span class="math">= ${RF.prettyHTML(t.ast, D())}</span>${t.arity !== null ? eqTable(t).replace(/<p class="note">.*?<\/p>/, '') : ''}</div>`).join('') + '</div>';
+  }
+  v.innerHTML = h;
+}
+$('#view').addEventListener('click', e => {
+  const g = e.target.closest('[data-goto]'); if (g) { const s = g.dataset.goto, i = s.indexOf(':'); setCurrent(s.slice(0, i), s.slice(i + 1)); }
+});
+
+/* ---------------- construction tree ---------------- */
+const measureCtx = document.createElement('canvas').getContext('2d');
+function tw(text, size, fam) { measureCtx.font = `${size}px ${fam}`; return measureCtx.measureText(text).width; }
+function buildTree(node, path, inUser, role, refDepth) {
+  const n = { role, path, arity: node.arity, kids: [], s: node.s, e: node.e, inUser };
+  switch (node.t) {
+    case 'S': case 'C': case 'P': n.kind = 'prim'; n.label = RF.prettyText(node, D()); break;
+    case 'comp': n.kind = 'comp'; n.label = '∘';
+      n.kids.push(buildTree(node.g, path + '.0', inUser, 'g', refDepth));
+      node.hs.forEach((h, i) => n.kids.push(buildTree(h, path + '.' + (i + 1), inUser, node.hs.length === 1 ? 'h' : 'h' + RF.sub(i + 1), refDepth)));
+      break;
+    case 'rho': n.kind = 'rho'; n.label = 'ρ'; n.kids.push(buildTree(node.g, path + '.0', inUser, 'g', refDepth), buildTree(node.h, path + '.1', inUser, 'h', refDepth)); break;
+    case 'mu': n.kind = 'mu'; n.label = 'μ'; n.kids.push(buildTree(node.g, path + '.0', inUser, 'g', refDepth)); break;
+    case 'ref': n.kind = 'ref'; n.label = dn(node.name); n.isRef = true;
+      if (S.expandAll && refDepth < 6) S.expanded.add(path);
+      if (S.expanded.has(path) && node.target && node.target.ast) { n.open = true; n.kids.push(buildTree(node.target.ast, path + '.d', false, '=', refDepth + 1)); }
+      break;
+  }
+  return n;
+}
+const NH = 32, LV = 82, GAP = 18;
+function layoutTree(n, depth) {
+  n.depth = depth;
+  n.w = Math.max(tw(n.label, 16, '"STIX Two Text", serif') + 26, n.arity != null ? tw(RF.typeText(n.arity), 11, 'sans-serif') + 12 : 0, 40);
+  if (!n.kids.length) { n.sw = n.w; return; }
+  n.kids.forEach(k => layoutTree(k, depth + 1));
+  const tot = n.kids.reduce((s, k) => s + k.sw, 0) + GAP * (n.kids.length - 1);
+  n.sw = Math.max(n.w, tot); n.tot = tot;
+}
+function placeTree(n, left, acc) {
+  n.x = left + n.sw / 2; n.y = 16 + n.depth * LV; acc.push(n);
+  if (!n.kids.length) return;
+  let x = left + (n.sw - n.tot) / 2;
+  for (const k of n.kids) { placeTree(k, x, acc); x += k.sw + GAP; }
+}
+let treeIndex = new Map();
+function renderTree(v, d) {
+  const key = (S.current.o) + ':' + d.name + '|';
+  S.expanded = S.expandedFor === key ? S.expanded : new Set(); S.expandedFor = key;
+  const root = buildTree(d.ast, 'r', d.origin === 'user', '', 0); S.expandAll = false;
+  layoutTree(root, 0); const all = []; placeTree(root, 10, all);
+  const W = Math.ceil(root.sw + 20), H = Math.ceil(Math.max(...all.map(n => n.y)) + NH + 34);
+  treeIndex = new Map(all.map(n => [n.path, n]));
+  let edges = '', nodes = '';
+  for (const n of all) for (const k of n.kids) {
+    const y1 = n.y + NH + (n.arity != null ? 19 : 0), y2 = k.y, my = (y1 + y2) / 2;
+    edges += `<path class="edge" d="M${n.x},${y1} C${n.x},${my} ${k.x},${my} ${k.x},${y2}"/>`;
+    if (k.role) edges += `<text class="elab" x="${k.x + 6}" y="${y2 - 7}">${esc(k.role)}</text>`;
+  }
+  for (const n of all) {
+    const tip = n.isRef ? (n.open ? 'Click to collapse' : 'Click to show its definition') : (n.inUser ? 'Click to find this in the editor' : '');
+    nodes += `<g class="nd n-${n.kind}${n.open ? ' open' : ''}" data-path="${n.path}" tabindex="0" role="button" aria-label="${esc(n.label)}${n.arity != null ? ', ' + n.arity + ' arguments' : ''}"><title>${tip}</title>`
+      + `<rect x="${n.x - n.w / 2}" y="${n.y}" width="${n.w}" height="${NH}" rx="${n.kind === 'prim' ? 6 : 10}"/>`
+      + `<text class="lab" x="${n.x}" y="${n.y + NH / 2 + 1}"${n.kind === 'comp' ? ' style="font-size:21px"' : ''}>${esc(n.label)}${n.isRef ? (n.open ? ' ▾' : ' ▸') : ''}</text>`
+      + (n.arity != null ? `<text class="ar" x="${n.x}" y="${n.y + NH + 14}">${esc(RF.typeText(n.arity))}</text>` : '') + '</g>';
+  }
+  const size = S.fit ? `width="100%" style="max-width:${W}px"` : `width="${W}" height="${H}"`;
+  v.innerHTML = `<div class="treebar"><div class="legend"><span><i class="lg-prim"></i>initial function</span><span><i class="lg-comp"></i>composition</span><span><i class="lg-rho"></i>primitive recursion</span><span><i class="lg-mu"></i>minimization</span><span><i class="lg-ref"></i>named function</span></div>
+    <span style="flex:1"></span><button class="btn" id="expAll">Expand all</button><button class="btn" id="colAll">Collapse all</button><label><input type="checkbox" id="fitChk"${S.fit ? ' checked' : ''}> Fit to width</label></div>
+    <div class="tree-wrap"><svg class="tree" viewBox="0 0 ${W} ${H}" ${size} xmlns="http://www.w3.org/2000/svg">${edges}${nodes}</svg></div>
+    <p class="note">Each node shows its type underneath. Labels on the edges say which argument of ∘, ρ or μ the child is.</p>`;
+  $('#expAll').onclick = () => { S.expandAll = true; renderView(); };
+  $('#colAll').onclick = () => { S.expanded.clear(); renderView(); };
+  $('#fitChk').onchange = e => { S.fit = e.target.checked; renderView(); };
+  const act = g => { const n = treeIndex.get(g.dataset.path); if (!n) return;
+    if (n.isRef) { S.expanded.has(n.path) ? S.expanded.delete(n.path) : S.expanded.add(n.path); renderView(); }
+    else if (n.inUser && n.s != null) selectRange(n.s, n.e); };
+  v.querySelectorAll('.nd').forEach(g => { g.addEventListener('click', () => act(g)); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(g); } }); });
+}
+
+/* ---------------- evaluate / trace ---------------- */
+function defaultArgs(a) { return [2, 3, 1, 1, 1, 1, 1, 1].slice(0, a); }
+const argList = a => a.join(', ');
+function callHTML(name, args) { return `<span class="m-name">${esc(dn(name))}</span>` + (args.length ? `(${argList(args)})` : ''); }
+function nodeLabel(t) {
+  if (t.kind === 'call') return callHTML(t.name, t.args);
+  const p = RF.prettyHTML(t.node, D()), a = t.args.length ? `(${argList(t.args)})` : '';
+  if (t.kind === 'comp') return `(${p})${a}`;
+  return p + a;
+}
+function roleChip(t, idx, par) {
+  const r = t.role; if (!r) return '';
+  if (r === 'base' || r.startsWith('step')) {
+    const K = r === 'base' ? 0 : r.slice(4), xs = par ? par.args.slice(0, -1) : [];
+    const f = par && par.kind === 'call' ? esc(dn(par.name)) : 'f';
+    return `<span class="role">${f}(${[...xs, K].join(', ')})</span>`;
+  }
+  if (r === 'try') return `<span class="role">z = ${idx}</span>`;
+  return `<span class="role">${r}</span>`;
+}
+function traceHTML(t, depth, idx, par) {
+  const val = t.val === undefined ? '<span class="val u">…</span>' : `<span class="val">${t.val}</span>`;
+  const head = `${roleChip(t, idx, par)}${nodeLabel(t)} = ${val}`;
+  if (!t.kids.length && !t.more) return `<div class="leaf">${head}</div>`;
+  return `<details${depth < 2 ? ' open' : ''}><summary>${head}</summary>${t.kids.map((k, i) => traceHTML(k, depth + 1, i, t)).join('')}${t.more ? `<div class="more">${t.more} more step${t.more === 1 ? '' : 's'} not shown</div>` : ''}</details>`;
+}
+function runTrace(d) {
+  const args = S.traceArgs[d.name] || defaultArgs(d.arity);
+  const r = RF.evaluate(d, args, S.limit, { trace: true, cap: 2500 });
+  S.traceRes = { key: d.origin + ':' + d.name + ':' + args.join(','), args, r };
+}
+function renderTrace(v, d) {
+  if (!S.traceArgs[d.name] || S.traceArgs[d.name].length !== d.arity) S.traceArgs[d.name] = defaultArgs(d.arity);
+  const args = S.traceArgs[d.name];
+  const key = d.origin + ':' + d.name + ':' + args.join(',');
+  if (!S.traceRes || S.traceRes.key !== key || S.traceRes.limit !== S.limit || S.traceRes.ver !== S.A) { runTrace(d); S.traceRes.limit = S.limit; S.traceRes.ver = S.A; }
+  const r = S.traceRes.r;
+  const inputs = args.map((a, i) => `<input type="number" min="0" step="1" value="${a}" data-i="${i}" aria-label="argument ${i + 1}">`).join(', ');
+  let res;
+  if (r.ok) res = `<div class="result">${callHTML(d.name, args)} = <span class="val">${r.value}</span> <span class="note">(${r.steps.toLocaleString()} steps)</span></div>`;
+  else if (r.deep) res = `<div class="result bad">The evaluation nested too deeply to finish in the browser.</div>`;
+  else res = `<div class="result bad">${callHTML(d.name, args)}: no value within ${S.limit.toLocaleString()} steps</div><p class="note">${d.usesMu ? 'A μ search has not found a zero yet. If none exists, the function is undefined (⊥) here. Raise the step limit to search further.' : 'This function is primitive recursive, so it does have a value; it just needs more steps. Raise the step limit or try smaller inputs.'}</p>`;
+  v.innerHTML = `<div class="runbar"><span class="call"><span class="m-name">${esc(dn(d.name))}</span>${d.arity ? '(' + inputs + ')' : ''}</span><button class="btn primary" id="runBtn">Evaluate</button></div>${res}
+    <div class="trace">${r.trace ? traceHTML(r.trace, 0, 0) : ''}</div>
+    ${r.recCount >= 2500 ? '<p class="note">Only the first 2 500 steps are listed.</p>' : ''}`;
+  const go = () => { S.traceArgs[d.name] = [...v.querySelectorAll('input[data-i]')].map(x => Math.max(0, Math.floor(+x.value || 0))); renderView(); };
+  $('#runBtn').onclick = go;
+  v.querySelectorAll('input[data-i]').forEach(x => x.addEventListener('keydown', e => { if (e.key === 'Enter') go(); }));
+}
+
+/* ---------------- value table ---------------- */
+function renderTable(v, d) {
+  const a = d.arity, cfg = S.table[d.name] || (S.table[d.name] = { r: a === 1 ? 12 : 7, c: 7, fixed: [] });
+  const cellLim = Math.min(S.limit, 200000); let budget = 4e6, missing = 0, tried = 0, skipped = 0;
+  const und = d.usesMu ? '⊥' : '…';
+  const cell = args => {
+    tried++;
+    if (budget <= 0) { skipped++; return `<td class="na">·</td>`; }
+    const r = RF.evaluate(d, args, cellLim); budget -= r.steps;
+    if (r.ok) return `<td data-a="${args.join(',')}">${r.value}</td>`;
+    missing++; return `<td class="u" data-a="${args.join(',')}" title="no value within ${cellLim.toLocaleString()} steps">${und}</td>`;
+  };
+  const num = (id, val, lab) => `<label>${lab} <input type="number" min="0" max="40" id="${id}" value="${val}"></label>`;
+  let ctl = '', body = '';
+  if (a === 0) { body = `<table class="vt"><tr><th>${esc(dn(d.name))}</th></tr><tr>${cell([])}</tr></table>`; }
+  else if (a === 1) {
+    ctl = num('tR', cfg.r, 'n from 0 to');
+    const ns = [...Array(cfg.r + 1).keys()];
+    body = `<div class="scroll"><table class="vt"><tr><th><i>n</i></th>${ns.map(n => `<th>${n}</th>`).join('')}</tr><tr><th>${esc(dn(d.name))}(<i>n</i>)</th>${ns.map(n => cell([n])).join('')}</tr></table></div>`;
+  } else {
+    while (cfg.fixed.length < a - 2) cfg.fixed.push(1);
+    const fx = cfg.fixed.slice(0, a - 2);
+    ctl = fx.map((f, i) => `<label><i>n</i><sub>${i + 1}</sub> = <input type="number" min="0" data-f="${i}" value="${f}"></label>`).join(' ') + ' ' + num('tR', cfg.r, `rows n<sub>${a - 1}</sub> 0 to`) + ' ' + num('tC', cfg.c, `columns n<sub>${a}</sub> 0 to`);
+    const rs = [...Array(cfg.r + 1).keys()], cs = [...Array(cfg.c + 1).keys()];
+    body = `<div class="scroll"><table class="vt"><tr><th><i>n</i><sub>${a - 1}</sub> \\ <i>n</i><sub>${a}</sub></th>${cs.map(c => `<th>${c}</th>`).join('')}</tr>${rs.map(r => `<tr><th>${r}</th>${cs.map(c => cell([...fx, r, c])).join('')}</tr>`).join('')}</table></div>`;
+  }
+  let sum;
+  if (missing === 0 && skipped === 0) sum = `Defined at all ${tried} inputs tried.`;
+  else if (missing) sum = d.usesMu ? `No value within ${cellLim.toLocaleString()} steps at ${missing} of the ${tried} inputs tried (⊥). If those searches never end, ${esc(dn(d.name))} is a partial function, not a total recursive one.` : `${missing} entries needed more than ${cellLim.toLocaleString()} steps (…); they do have values.`;
+  else sum = '';
+  if (skipped) sum += ` ${skipped} entries were skipped to keep the page responsive (·); use a smaller range.`;
+  v.innerHTML = `<div class="runbar">${ctl}</div>${body}<p class="tsum">${sum} Click an entry to see how it is computed.</p>`;
+  const upd = () => {
+    const R = $('#tR'), C = $('#tC'); if (R) cfg.r = Math.min(40, Math.max(0, +R.value || 0)); if (C) cfg.c = Math.min(40, Math.max(0, +C.value || 0));
+    v.querySelectorAll('input[data-f]').forEach(x => cfg.fixed[+x.dataset.f] = Math.max(0, Math.floor(+x.value || 0)));
+    renderView();
+  };
+  v.querySelectorAll('input').forEach(x => x.addEventListener('change', upd));
+  v.querySelectorAll('td[data-a]').forEach(td => td.addEventListener('click', () => { S.traceArgs[d.name] = td.dataset.a ? td.dataset.a.split(',').map(Number) : []; setTab('trace'); }));
+}
+
+/* ---------------- checks ---------------- */
+function runChecks() {
+  S.checks = S.A.user.evals.map(ev => {
+    if (ev.err || !ev.def || ev.def.err) return { ev, err: ev.err || (ev.def && `${ev.name} has an error`) };
+    const r = RF.evaluate(ev.def, ev.args, S.limit);
+    let st = 'na';
+    if (ev.expected === 'undef') st = r.ok ? 'no' : 'ok';
+    else if (ev.expected !== undefined) st = r.ok && r.value === ev.expected ? 'ok' : 'no';
+    return { ev, r, st };
+  });
+  const withExp = S.checks.filter(c => c.ev.expected !== undefined);
+  const pass = withExp.filter(c => c.st === 'ok').length;
+  $('#ckCount').textContent = withExp.length ? `${pass}/${withExp.length}` : (S.checks.length ? `(${S.checks.length})` : '');
+  if (S.tab === 'checks') renderView();
+}
+function renderChecks(v) {
+  if (!S.checks.length) { v.innerHTML = `<p class="empty">Add lines like <span class="math">Add(2, 3) = 5</span> to the editor to check values, or <span class="math">Add(2, 3)</span> to just evaluate. Use <span class="math">⊥</span> when you expect no value.</p>`; return; }
+  const rows = S.checks.map((c, i) => {
+    const ev = c.ev, exp = ev.expected === undefined ? '<span class="na">—</span>' : ev.expected === 'undef' ? '⊥' : ev.expected;
+    let got, st;
+    if (c.err) { got = `<span class="no">${esc(c.err)}</span>`; st = ''; }
+    else {
+      got = c.r.ok ? c.r.value : `<span class="val u" title="no value within ${S.limit.toLocaleString()} steps">${ev.def.usesMu ? '⊥' : '…'}</span>`;
+      st = c.st === 'ok' ? '<span class="ok">✓ pass</span>' + (ev.expected === 'undef' ? ' <span class="na">(no value within the limit)</span>' : '') : c.st === 'no' ? '<span class="no">✗ fail</span>' : '';
+    }
+    return `<tr><td><button class="link" data-line="${ev.line}">${ev.line}</button></td><td class="m"><button class="link math" data-ck="${i}">${esc(dn(ev.name))}${ev.args.length ? '(' + argList(ev.args) + ')' : ''}</button></td><td class="m">${exp}</td><td class="m">${got}</td><td>${c.r ? c.r.steps.toLocaleString() : ''}</td><td>${st}</td></tr>`;
+  }).join('');
+  v.innerHTML = `<div class="scroll"><table class="ck"><tr><th>Line</th><th>Call</th><th>Expected</th><th>Result</th><th>Steps</th><th></th></tr>${rows}</table></div><p class="note">Click a call to see how it is computed.</p>`;
+  v.querySelectorAll('[data-line]').forEach(b => b.onclick = () => goToLine(+b.dataset.line));
+  v.querySelectorAll('[data-ck]').forEach(b => b.onclick = () => { const c = S.checks[+b.dataset.ck]; if (!c.ev.def || c.err) return; S.traceArgs[c.ev.def.name] = c.ev.args.slice(); S.current = { o: c.ev.def.origin === 'user' ? 'u' : 'l', n: c.ev.def.name }; renderFnSelect(); renderFnHead(); setTab('trace'); });
+}
+$('#limitSel').addEventListener('change', e => { S.limit = +e.target.value; runChecks(); renderView(); });
+
+/* ---------------- examples ---------------- */
+function updateExamples() {
+  const sel = $('#exampleSel'), lib = activeLib();
+  sel.innerHTML = '<option value="">Load an example…</option>' + EXAMPLES.map(ex => {
+    const A = RF.analyze(ex.src, lib);
+    const need = [...new Set(A.user.diags.filter(d => d.msg.startsWith('Unknown function')).map(d => d.msg.split(' ')[2].replace(/\.$/, '')))];
+    return `<option value="${ex.id}"${need.length ? ' disabled' : ''}>${esc(ex.label)}${need.length ? ` (needs ${need.map(dn).join(', ')})` : ''}</option>`;
+  }).join('');
+}
+let toastT = 0;
+function toast(msg, undo) {
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status');
+  t.innerHTML = `<span>${esc(msg)}</span>` + (undo ? '<button>Undo</button>' : '');
+  if (undo) t.querySelector('button').onclick = () => { undo(); t.remove(); };
+  document.body.appendChild(t); clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 8000);
+}
+function setSource(src) { ta.value = src; S.src = src; store.set(LS_KEY, src); S.current = null; reanalyze(); }
+$('#exampleSel').addEventListener('change', e => {
+  const ex = EXAMPLES.find(x => x.id === e.target.value); e.target.value = ''; if (!ex) return;
+  const prev = S.src; setSource(ex.src); toast(`Loaded “${ex.label}”.`, () => setSource(prev));
+});
+
+/* ---------------- dialogs ---------------- */
+document.querySelectorAll('dialog [data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+document.querySelectorAll('dialog').forEach(dl => dl.addEventListener('click', e => { if (e.target === dl) dl.close(); }));
+$('#refBtn').onclick = () => $('#refDlg').showModal();
+function describe(src, d) {
+  const lines = src.split('\n'); const out = []; let l = d.line - 1;
+  while (l > 0 && /^\s*\/\//.test(lines[l - 1])) { out.unshift(lines[l - 1].replace(/^\s*\/\/\s?/, '')); l--; }
+  return out.join(' ');
+}
+$('#libBtn').onclick = () => {
+  const lib = activeLib(), A = RF.analyze('', lib), defs = [...A.lib.defs.values()].sort((a, b) => a.line - b.line);
+  const Dd = A.displays, showLocks = S.owner && !S.preview;
+  let h = '';
+  if (!defs.length) {
+    h = `<p class="empty">No prebuilt functions are available yet. Your instructor unlocks them as the course covers them; until then, build what you need from S, C, P, ∘, ρ and μ.</p>`;
+    if (!S.dbReady && !standalone) h += `<p class="note">The course library loads when this page is opened on claude.ai while signed in.</p>`;
+  } else {
+    if (showLocks) h += `<p class="note">You see every library function. Students see only the ones marked unlocked.</p>`;
+    h += defs.map(d => `<div class="libitem"><div class="t"><span class="nm">${esc(RF.dispName(d.name, Dd))}</span>${d.arity !== null ? `<span class="math">: ${RF.typeHTML(d.arity)}</span>` : ''}${showLocks ? (S.unlocked.includes(d.name) ? '<span class="lock on">unlocked</span>' : '<span class="lock">locked</span>') : ''}<span style="flex:1"></span><button class="btn" data-show="${esc(d.name)}">Open</button></div>
+      <div class="desc">${esc(describe(lib, d))}</div>
+      <div class="defn">${esc(RF.dispName(d.name, Dd))} = ${RF.prettyHTML(d.ast, Dd)}</div>${d.err ? `<div class="no">${esc(d.err)}</div>` : ''}</div>`).join('');
+  }
+  $('#libBody').innerHTML = h;
+  $('#libBody').querySelectorAll('[data-show]').forEach(b => b.onclick = () => {
+    const n = b.dataset.show; $('#libDlg').close();
+    if (S.A.user.defs.has(n)) { toast(`Your own ${n} replaces the prebuilt one in this file.`); setCurrent('u', n); }
+    else setCurrent('l', n);
+  });
+  $('#libDlg').showModal();
+};
+
+/* ---------------- instructor ---------------- */
+const I = { draft: '', unl: new Set(), dirty: false, A: null };
+let pubRef = null, privRef = null;
+function instrAnalyze() { I.A = RF.analyze('', I.draft); }
+function renderInstr() {
+  instrAnalyze();
+  const defs = [...I.A.lib.defs.values()].sort((a, b) => a.line - b.line), Dd = I.A.displays;
+  for (const n of [...I.unl]) if (!I.A.lib.defs.has(n)) I.unl.delete(n);
+  $('#unlList').innerHTML = defs.length ? defs.map(d => `<label><input type="checkbox" data-n="${esc(d.name)}"${I.unl.has(d.name) ? ' checked' : ''}> <span class="math m-name">${esc(RF.dispName(d.name, Dd))}</span> <span class="tp">${d.err ? '<span class="no">error</span>' : d.arity !== null ? RF.typeHTML(d.arity) : ''}</span></label>`).join('') : '<p class="note">No definitions yet. Add them below.</p>';
+  $('#libDiags').innerHTML = I.A.lib.diags.map(d => `<div class="diag ${d.sev}"><span class="ln">line ${d.line}</span><span>${esc(d.msg)}</span></div>`).join('');
+  $('#unlList').querySelectorAll('input').forEach(c => c.onchange = () => {
+    const n = c.dataset.n;
+    if (c.checked) {
+      const add = [...RF.depClosure([n], I.A)].filter(x => !I.unl.has(x) && x !== n);
+      RF.depClosure([n], I.A).forEach(x => I.unl.add(x));
+      setStatus(add.length ? `${RF.dispName(n, Dd)} uses ${add.map(x => RF.dispName(x, Dd)).join(', ')}, so ${add.length === 1 ? 'it is' : 'they are'} unlocked too.` : '');
+    } else {
+      const rm = [...I.unl].filter(x => x !== n && RF.depClosure([x], I.A).has(n));
+      I.unl.delete(n); rm.forEach(x => I.unl.delete(x));
+      setStatus(rm.length ? `${rm.map(x => RF.dispName(x, Dd)).join(', ')} ${rm.length === 1 ? 'uses' : 'use'} ${RF.dispName(n, Dd)}, so ${rm.length === 1 ? 'it is' : 'they are'} locked too.` : '');
+    }
+    I.dirty = true; renderInstr();
+  });
+  const m = S.publicMeta;
+  $('#pubStatus').textContent = m && m.names && m.names.length ? `Students currently see: ${m.names.map(x => RF.dispName(x, Dd)).join(', ')}${m.updatedAt ? ` (updated ${new Date(m.updatedAt).toLocaleString()})` : ''}.` : 'Students currently see no prebuilt functions.';
+}
+function setStatus(msg, err) { const s = $('#instrStatus'); s.textContent = msg; s.classList.toggle('err', !!err); }
+$('#instrBtn').onclick = () => {
+  if (!I.dirty) { I.draft = S.libFull || ''; I.unl = new Set(S.unlocked); }
+  $('#libSrc').value = I.draft; $('#previewChk').checked = S.preview; $('#exportOut').hidden = true; setStatus('');
+  renderInstr(); $('#instrDlg').showModal();
+};
+let libT = 0;
+$('#libSrc').addEventListener('input', e => { I.draft = e.target.value; I.dirty = true; clearTimeout(libT); libT = setTimeout(renderInstr, 200); });
+$('#previewChk').onchange = e => { S.preview = e.target.checked; $('#previewPill').hidden = !S.preview; reanalyze(); };
+async function savePrivate() { await privRef.set({ source: I.draft, unlocked: [...I.unl], updatedAt: new Date().toISOString() }); }
+$('#saveBtn').onclick = async () => {
+  if (!privRef) return setStatus('Saving needs this page to be open on claude.ai.', true);
+  setStatus('Saving…');
+  try { await savePrivate(); I.dirty = false; setStatus('Saved. Students’ library is unchanged.'); }
+  catch (e) { setStatus('Could not save: ' + (e.message || e.code), true); }
+};
+$('#publishBtn').onclick = async () => {
+  if (!privRef || !pubRef) return setStatus('Updating needs this page to be open on claude.ai.', true);
+  instrAnalyze();
+  const bad = [...I.unl].filter(n => I.A.lib.defs.get(n).err);
+  if (bad.length) return setStatus(`Fix the errors in ${bad.join(', ')} first.`, true);
+  const names = [...I.unl].sort((a, b) => I.A.lib.defs.get(a).line - I.A.lib.defs.get(b).line);
+  setStatus('Updating…');
+  try {
+    await pubRef.set({ source: names.length ? RF.extract(I.draft, names, I.A) : '', names, updatedAt: new Date().toISOString() });
+    await savePrivate(); I.dirty = false;
+    setStatus(names.length ? `Updated. Students can now use ${names.map(n => RF.dispName(n, I.A.displays)).join(', ')}.` : 'Updated. Students see no prebuilt functions.');
+  } catch (e) { setStatus('Could not update: ' + (e.message || e.code), true); }
+};
+$('#exportBtn').onclick = () => {
+  instrAnalyze();
+  const names = [...I.unl].filter(n => !I.A.lib.defs.get(n).err);
+  const out = $('#exportOut'); out.hidden = false;
+  out.value = `<script type="text/x-recfn-library" id="standalone-library">\n${names.length ? RF.extract(I.draft, names, I.A) : ''}</scr` + 'ipt>';
+  out.select();
+};
+
+/* ---------------- runtime: shared library ---------------- */
+(async () => {
+  if (!window.claude || typeof window.claude.use !== 'function') return;
+  let db = null, user = null;
+  try { [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]); } catch (e) { return; }
+  if (!db) return;
+  S.dbReady = true;
+  pubRef = db.doc('public/library');
+  pubRef.onSnapshot(snap => {
+    const d = snap.exists ? snap.data() : null;
+    S.publicMeta = d; S.libPublic = d && typeof d.source === 'string' ? d.source : (standalone || '');
+    reanalyze(); if ($('#instrDlg').open) renderInstr();
+  }, () => {});
+  const owner = user ? await user.isOwner() : false;
+  if (!owner) return;
+  const uid = await user.id(); if (!uid) return;
+  S.owner = true; $('#instrBtn').hidden = false;
+  privRef = db.doc('data/users/' + uid + '/library');
+  privRef.onSnapshot(snap => {
+    const d = snap.exists ? snap.data() : null;
+    S.libFull = d && typeof d.source === 'string' ? d.source : '';
+    S.unlocked = d && Array.isArray(d.unlocked) ? d.unlocked : [];
+    if (!I.dirty) { I.draft = S.libFull; I.unl = new Set(S.unlocked); if ($('#instrDlg').open) { $('#libSrc').value = I.draft; renderInstr(); } }
+    reanalyze();
+  }, () => {});
+})();
+
+reanalyze();
+})();
+
+</script>
+</body>
+</html>
